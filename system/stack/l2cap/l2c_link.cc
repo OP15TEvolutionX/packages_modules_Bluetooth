@@ -35,8 +35,6 @@
 #include "device/include/device_iot_config.h"
 #include "internal_include/bt_target.h"
 #include "osi/include/allocator.h"
-#include "osi/include/properties.h"
-#include "stack/btm/btm_int_types.h"
 #include "stack/btm/btm_sco.h"
 #include "stack/btm/btm_sec.h"
 #include "stack/include/acl_api.h"
@@ -767,18 +765,13 @@ void l2c_pin_code_request(const RawAddress& bd_addr) {
  * Returns          void
  *
  ******************************************************************************/
-void l2c_link_set_br_coex_buf_cap(uint16_t bufs_to_disable, tL2C_COEX_READY cb) {
-  if (!osi_property_get_bool("persist.bluetooth.a2dp_offload.mtk_coex", false)) {
-    std::move(cb).Run(/* success= */ true);
-    return;
-  }
-
-  uint16_t new_bufs_count = l2cb.full_num_lm_acl_bufs - bufs_to_disable;
+void l2c_link_set_br_coex_buf_cap(uint16_t bufs_to_reserve, tL2C_COEX_READY cb) {
+  uint16_t new_bufs_count = l2cb.full_num_lm_acl_bufs - bufs_to_reserve;
   uint16_t pending_acks = l2cb.num_lm_acl_bufs - l2cb.controller_xmit_window + l2cb.pending_acks_until_coex_cb;
 
-  log::info(
+  log::debug(
       "coex buf cap: total={} reserving={} available={} pending_acks={} xmit_window={}",
-      l2cb.full_num_lm_acl_bufs, bufs_to_disable, new_bufs_count,
+      l2cb.full_num_lm_acl_bufs, bufs_to_reserve, new_bufs_count,
       pending_acks, l2cb.controller_xmit_window);
 
   if (l2cb.pending_acks_until_coex_cb > 0) {
